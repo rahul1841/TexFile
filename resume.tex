@@ -1,0 +1,184 @@
+const { exec } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const tmp = require('tmp');
+
+// LaTeX content
+const latexContent = `
+\\documentclass[a4paper]{article}
+\\usepackage{fullpage}
+\\usepackage{amsmath}
+\\usepackage{amssymb}
+\\usepackage{textcomp}
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+\\usepackage[hidelinks]{hyperref}
+\\usepackage[left=2cm, right=2cm, top=2cm]{geometry}
+\\usepackage{longtable}
+\\textheight=10in
+\\pagestyle{empty}
+\\raggedright
+
+\\def\\bull{\\vrule height 0.8ex width .7ex depth -.1ex }
+
+\\newcommand{\\area} [2] {
+    \\vspace*{-9pt}
+    \\begin{verse}
+        \\textbf{#1}   #2
+    \\end{verse}
+}
+
+\\newcommand{\\lineunder} {
+    \\vspace*{-8pt} \\\\
+    \\hspace*{-18pt} \\hrulefill \\\\
+}
+
+\\newcommand{\\header} [1] {
+    {\\hspace*{-18pt}\\vspace*{6pt} \\textsc{#1}}
+    \\vspace*{-6pt} \\lineunder
+}
+
+\\newcommand{\\employer} [3] {
+    { \\textbf{#1} (#2)\\\\ \\underline{\\textbf{\\emph{#3}}}\\\\  }
+}
+
+\\newcommand{\\contact} [3] {
+    \\vspace*{-10pt}
+    \\begin{center}
+        {\\Huge \\scshape {#1}}\\\\
+        #2 \\\\ #3
+    \\end{center}
+    \\vspace*{-8pt}
+}
+
+\\newenvironment{achievements}{
+    \\begin{list}
+        {\\$\\bullet$}{\\topsep 0pt \\itemsep -2pt}}{\\vspace*{4pt}
+    \\end{list}
+}
+
+\\newcommand{\\schoolwithcourses} [4] {
+    \\textbf{#1} #2 \\$\\bullet$ #3\\\\
+    #4 \\\\
+    \\vspace*{5pt}
+}
+
+\\newcommand{\\school} [4] {
+    \\textbf{#1} #2 \\$\\bullet$ #3\\\\
+    #4 \\\\
+}
+
+\\begin{document}
+\\vspace*{-40pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%     Profile
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \\vspace*{-2pt}
+  \\begin{center}
+    {\\Huge \\scshape {Rahul kumar}}\\\\
+    \\vspace*{2pt}
+    \\ {Software Engineering Intern}\\\\
+    \\vspace*{2pt}
+    \\href{mailto:rahul2004kumar14@gmail.com}{rahul2004kumar14@gmail.com} | \\href{tel:+916005435690}{+916005435690} | C173,BLOCK C,BETA 1,9TH CTOSS STREET ,GREATER NOIDA\\\\
+    \\vspace*{2pt}
+    \\textbf{\\href{https://github.com/rahul1841}{GitHub}} | \\textbf{\\href{https://github.com/rahul1841}{GitHub}} | \\textbf{\\href{https://github.com/rahul1841}{GitHub}}\\\\
+  \\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%     Education
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\\header{Education}
+\\vspace{2mm}
+
+\\textbf{GL Bajaj Institute Of Technology And Managment}\\hfill Greater Noida\\\\
+B.Tech (Information Technology) \\hfill 2021 - 2025\\\\
+\\textsl{GPA: 7.75}\\\\
+\\vspace{2mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%     Experience
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\\header{Experience}
+\\vspace{2mm}
+
+\\textbf{Bombay Shaving Company}\\textbf{ | SDE Intern} \\hfill Hiranagar | Feb 2024 - Apr 2024\\\\
+\\vspace{-3mm}
+\\begin{itemize} \\itemsep -3pt
+\\item[] nnjn
+\\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%     Skills
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\\header{Skills}
+\\vspace{2mm}
+\\begin{longtable}{p{4cm}p{12cm}}
+
+\\end{longtable}
+\\vspace{1mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%     Projects
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\\header{Projects}
+\\vspace{2mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%     Certifications
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\\header{Certifications}
+\\vspace{2mm}
+\\vspace{2mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%     Honors and Awards
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\\header{Honors and Awards}
+\\vspace{2mm}
+
+\\end{document}
+`;
+
+// Create a temporary directory for the LaTeX file
+const tempDir = tmp.dirSync({ unsafeCleanup: true });
+const latexFile = path.join(tempDir.name, 'resume.tex');
+
+// Write the LaTeX content to a .tex file
+fs.writeFileSync(latexFile, latexContent, 'utf8');
+
+// Run pdflatex to convert the .tex file to a .pdf file
+exec(`pdflatex -output-directory ${tempDir.name} ${latexFile}`, (error, stdout, stderr) => {
+    if (error) {
+        console.error(`Error: ${error.message}`);
+        return;
+    }
+    if (stderr) {
+        console.error(`stderr: ${stderr}`);
+        return;
+    }
+
+    const pdfFile = path.join(tempDir.name, 'resume.pdf');
+    const outputPdf = path.join(__dirname, 'resume.pdf');
+
+    // Move the PDF file to the desired output location
+    fs.renameSync(pdfFile, outputPdf);
+    console.log(`PDF generated: ${outputPdf}`);
+
+    // Cleanup the temporary directory
+    tempDir.removeCallback();
+});
